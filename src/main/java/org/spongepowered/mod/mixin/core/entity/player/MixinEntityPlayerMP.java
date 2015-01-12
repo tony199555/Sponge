@@ -29,6 +29,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.flowpowered.math.vector.Vector3d;
 import com.google.common.base.Optional;
+
+import net.minecraft.command.ICommand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -36,6 +38,7 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.network.play.server.S45PacketTitle;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 import org.spongepowered.api.GameProfile;
 import org.spongepowered.api.effect.particle.ParticleEffect;
@@ -310,5 +313,10 @@ public abstract class MixinEntityPlayerMP extends EntityPlayer implements Comman
     public Set<Context> getActiveContexts() {
         Subject subj = internalSubject();
         return subj == null ? Collections.<Context>emptySet() : subj.getActiveContexts();
+    }
+
+    public boolean canCommandSenderUseCommand(int permissionLevel, String commandName) {
+        ICommand command = (ICommand) MinecraftServer.getServer().getCommandManager().getCommands().get(commandName);
+        return hasPermission("minecraft.command." + commandName); // All MC commands are now controlled by permission
     }
 }
