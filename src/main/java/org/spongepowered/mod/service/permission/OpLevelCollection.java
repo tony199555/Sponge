@@ -24,84 +24,73 @@
  */
 package org.spongepowered.mod.service.permission;
 
-import com.mojang.authlib.GameProfile;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.PlayerProfileCache;
+import com.google.common.collect.ImmutableMap;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.Context;
+import org.spongepowered.api.util.Tristate;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
-/**
- * User collection keeping track of opped users
- */
-public class OpsListUserCollection implements SubjectCollection {
+public class OpLevelCollection implements SubjectCollection {
     private final OpPermissionService service;
-
-    public OpsListUserCollection(OpPermissionService service) {
+    private final Map<String, OpLevelSubject> levels;
+    public OpLevelCollection(OpPermissionService service) {
         this.service = service;
+        ImmutableMap.Builder<String, OpLevelSubject> build = ImmutableMap.builder();
+        for (int i = 0; i < 4; ++i) {
+            build.put("op_" + i, new OpLevelSubject(service, i));
+        }
+        levels = build.build();
     }
 
     @Override
     public String getIdentifier() {
-        return PermissionService.SUBJECTS_USER;
+        return PermissionService.SUBJECTS_GROUP;
     }
 
     @Override
     public Subject get(String identifier) {
-        UUID uid = identToUUID(identifier);
-        return new MCPlayerSubject(uuidToGameProfile(uid), this); // TODO cache subject objects while users are online
-    }
-
-    private GameProfile uuidToGameProfile(UUID uid) {
-        PlayerProfileCache cache = MinecraftServer.getServer().getPlayerProfileCache();
-        GameProfile profile = cache.func_152652_a(uid); // Get already cached profile by uuid
-        if (profile == null) {
-            profile = MinecraftServer.getServer().getMinecraftSessionService().fillProfileProperties(new GameProfile(uid, null), false);
-            cache.func_152649_a(profile); // Cache newly looked up profile
-            cache.func_152658_c(); // Save
-        }
-        return profile;
+        return levels.containsKey(identifier) ? levels.get(identifier) : null;
     }
 
     @Override
     public boolean hasRegistered(String identifier) {
-        UUID uid = identToUUID(identifier);
-        if (uid == null) {
-            return false;
-        }
-        GameProfile profile = uuidToGameProfile(uid);
-        return MinecraftServer.getServer().getConfigurationManager().getOppedPlayers().getEntry(profile) != null;
-    }
-
-    private UUID identToUUID(String identifier) {
-        try {
-            return UUID.fromString(identifier);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return levels.containsKey(identifier);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Iterable<Subject> getAllSubjects() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        return (Collection) levels.values();
     }
 
     @Override
     public Map<Subject, Boolean> getAllWithPermission(String permission) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        final Map<Subject, Boolean> ret = new HashMap<Subject, Boolean>();
+        for (Subject subj : getAllSubjects()) {
+            Tristate state = subj.getPermissionValue(subj.getActiveContexts(), permission);
+            if (state != Tristate.UNDEFINED) {
+                ret.put(subj, state.asBoolean());
+            }
+        }
+        return Collections.unmodifiableMap(ret);
     }
 
     @Override
     public Map<Subject, Boolean> getAllWithPermission(Set<Context> contexts, String permission) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    public OpPermissionService getService() {
-        return service;
+        final Map<Subject, Boolean> ret = new HashMap<Subject, Boolean>();
+        for (Subject subj : getAllSubjects()) {
+            Tristate state = subj.getPermissionValue(contexts, permission);
+            if (state != Tristate.UNDEFINED) {
+                ret.put(subj, state.asBoolean());
+            }
+        }
+        return Collections.unmodifiableMap(ret);
     }
 }

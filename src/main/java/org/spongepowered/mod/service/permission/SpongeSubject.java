@@ -24,58 +24,26 @@
  */
 package org.spongepowered.mod.service.permission;
 
-import com.google.common.base.Optional;
-import com.mojang.authlib.GameProfile;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.UserListOpsEntry;
-import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.Subject;
-import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.permission.context.Context;
+import org.spongepowered.api.service.permission.context.ContextCalculator;
 import org.spongepowered.api.util.Tristate;
-import org.spongepowered.api.util.command.CommandSource;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * An implementation of vanilla minecraft's 4 op groups
- */
-public class MCPlayerSubject implements Subject {
-    private final GameProfile player;
-    private final MemorySubjectData data;
-    private final OpsListUserCollection collection;
+public abstract class SpongeSubject implements Subject {
+    private final OpPermissionService service;
 
-    public MCPlayerSubject(GameProfile player, OpsListUserCollection users) {
-        this.player = player;
-        this.data = new MemorySubjectData(users.getService());
-        this.collection = users;
+    protected SpongeSubject(OpPermissionService service) {
+        this.service = service;
     }
 
-    @Override
-    public String getIdentifier() {
-        return player.getId().toString();
-    }
-
-    @Override
-    public Optional<CommandSource> getCommandSource() {
-        return Optional.fromNullable((CommandSource) MinecraftServer.getServer().getConfigurationManager().func_177451_a(player.getId()));
-    }
-
-    int getOpLevel() {
-        // Query op level from server ops list based on player's game profile
-        return ((UserListOpsEntry) MinecraftServer.getServer().getConfigurationManager().getOppedPlayers().getEntry(player)).func_152644_a();
-    }
-
-    @Override
-    public SubjectCollection getContainingCollection() {
-        return collection;
-    }
-
-    @Override
-    public SubjectData getData() {
-        return data;
+    protected OpPermissionService getService() {
+        return this.service;
     }
 
     @Override
@@ -88,7 +56,6 @@ public class MCPlayerSubject implements Subject {
         return getPermissionValue(contexts, permission) == Tristate.TRUE;
     }
 
-
     @Override
     public boolean hasPermission(String permission) {
         return hasPermission(getActiveContexts(), permission);
@@ -96,23 +63,20 @@ public class MCPlayerSubject implements Subject {
 
     @Override
     public Tristate getPermissionValue(Set<Context> contexts, String permission) {
-        Tristate res = getData().getPermissions(contexts).get(permission);
+        Boolean res = getData().getPermissions(contexts).get(permission);
         if (res == null) {
             res = getData().getPermissions(SubjectData.GLOBAL_CONTEXT).get(permission);
-            if (res == null) {
-                res = Tristate.UNDEFINED;
-            }
         }
-        if (res == Tristate.UNDEFINED) {
+        if (res == null) {
             for (Subject parent : getData().getParents(contexts)) {
                 Tristate tempRes = parent.getPermissionValue(contexts, permission);
                 if (tempRes != Tristate.UNDEFINED) {
-                    res = tempRes;
+                    res = tempRes.asBoolean();
                     break;
                 }
             }
         }
-        return res;
+        return res == null ? Tristate.UNDEFINED : Tristate.fromBoolean(res);
     }
 
     @Override
@@ -137,6 +101,10 @@ public class MCPlayerSubject implements Subject {
 
     @Override
     public Set<Context> getActiveContexts() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        Set<Context> contexts = new HashSet<Context>();
+        for (ContextCalculator calc : service.getContextCalculators()) {
+            calc.accumulateContexts(this, contexts);
+        }
+        return Collections.unmodifiableSet(contexts);
     }
 }

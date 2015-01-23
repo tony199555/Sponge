@@ -44,7 +44,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class OpPermissionService implements PermissionService {
     private final List<ContextCalculator> calcs = new CopyOnWriteArrayList<ContextCalculator>();
-    private final OpsListUserCollection users = new OpsListUserCollection(this);
+    private final UserCollection users = new UserCollection(this);
     private final MemorySubjectData defaultData = new MemorySubjectData(this);
 
     public OpPermissionService() {
@@ -68,7 +68,7 @@ public class OpPermissionService implements PermissionService {
     }
 
     @Override
-    public OpsListUserCollection getUserSubjects() {
+    public UserCollection getUserSubjects() {
         return users;
     }
 
