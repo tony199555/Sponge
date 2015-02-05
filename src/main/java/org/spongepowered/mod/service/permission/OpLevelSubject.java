@@ -25,18 +25,30 @@
 package org.spongepowered.mod.service.permission;
 
 import com.google.common.base.Optional;
+import org.spongepowered.api.GameProfile;
 import org.spongepowered.api.service.permission.MemorySubjectData;
+import org.spongepowered.api.service.permission.PermissionService;
+import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.SubjectData;
+import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.util.command.CommandSource;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class OpLevelSubject extends SpongeSubject {
-    private final int level;
+    private final GameProfile profile;
     private final MemorySubjectData data;
-    public OpLevelSubject(OpPermissionService service, int level) {
+    public OpLevelSubject(OpPermissionService service, GameProfile profile) {
         super(service);
-        this.level = level;
-        this.data = new MemorySubjectData(service);
+        this.profile = profile;
+        this.data = new OpLevelSubjectData(service);
+    }
+
+    private int getOpLevel() {
+
     }
 
     @Override
@@ -57,5 +69,51 @@ public class OpLevelSubject extends SpongeSubject {
     @Override
     public SubjectData getData() {
         return data;
+    }
+
+    /**
+     * Variant of {@link MemorySubjectData} that gets parents based on the server's op setting for a given user
+     */
+    private class OpLevelSubjectData extends MemorySubjectData {
+
+        public OpLevelSubjectData(PermissionService service) {
+            super(service);
+        }
+
+        @Override
+        public Map<Set<Context>, List<Subject>> getAllParents() {
+            return super.getAllParents();
+        }
+
+        @Override
+        public List<Subject> getParents(Set<Context> contexts) {
+            return super.getParents(contexts);
+        }
+
+        @Override
+        public boolean addParent(Set<Context> contexts, Subject parent) {
+            if (!(parent instanceof OpLevelSubject)) {
+                return false;
+            }
+            return super.addParent(contexts, parent);
+        }
+
+        @Override
+        public boolean removeParent(Set<Context> contexts, Subject parent) {
+            if (!(parent instanceof OpLevelSubject)) {
+                return false;
+            }
+            return super.removeParent(contexts, parent);
+        }
+
+        @Override
+        public boolean clearParents() {
+            return super.clearParents();
+        }
+
+        @Override
+        public boolean clearParents(Set<Context> contexts) {
+            return super.clearParents(contexts);
+        }
     }
 }

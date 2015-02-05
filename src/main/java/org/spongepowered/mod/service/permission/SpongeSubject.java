@@ -76,6 +76,10 @@ public abstract class SpongeSubject implements Subject {
                 }
             }
         }
+        if (res == null) {
+            res = service.getDefaultData().getPermissions(contexts).get(permission);
+
+        }
         return res == null ? Tristate.UNDEFINED : Tristate.fromBoolean(res);
     }
 

@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommand;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.UserListOps;
 import org.spongepowered.api.service.permission.*;
 import org.spongepowered.api.service.permission.context.Context;
 import org.spongepowered.api.service.permission.context.ContextCalculator;
@@ -61,6 +62,10 @@ public class OpPermissionService implements PermissionService {
 
     public static String permissionForMCCommand(ICommand command) {
         return "minecraft.command." + command.getCommandName();
+    }
+
+    static UserListOps getOps() {
+        return MinecraftServer.getServer().getConfigurationManager().getOppedPlayers();
     }
 
     Subject getGroupForOpLevel(int level) {

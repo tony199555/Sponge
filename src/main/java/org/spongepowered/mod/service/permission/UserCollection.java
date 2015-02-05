@@ -24,15 +24,18 @@
  */
 package org.spongepowered.mod.service.permission;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerProfileCache;
-import net.minecraft.server.management.UserListOps;
+import net.minecraft.server.management.UserListOpsEntry;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.Context;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -55,11 +58,14 @@ public class UserCollection implements SubjectCollection {
     @Override
     public Subject get(String identifier) {
         UUID uid = identToUUID(identifier);
-        return new UserSubject(uuidToGameProfile(uid), this); // TODO cache subject objects while users are online
+        if (uid == null) {
+            throw new IllegalArgumentException("Provided identifier must be a uuid, was " + identifier);
+        }
+        return get(uuidToGameProfile(uid));
     }
 
-    private UserListOps getOps() {
-        return MinecraftServer.getServer().getConfigurationManager().getOppedPlayers();
+    protected Subject get(GameProfile profile) {
+        return new UserSubject(profile, this);
     }
 
     private GameProfile uuidToGameProfile(UUID uid) {
@@ -80,7 +86,7 @@ public class UserCollection implements SubjectCollection {
             return false;
         }
         GameProfile profile = uuidToGameProfile(uid);
-        return getOps().getEntry(profile) != null;
+        return OpPermissionService.getOps().getEntry(profile) != null;
     }
 
     private UUID identToUUID(String identifier) {
@@ -93,8 +99,14 @@ public class UserCollection implements SubjectCollection {
 
     @Override
     public Iterable<Subject> getAllSubjects() {
-        getOps().
-
+        return Iterables.transform(OpPermissionService.getOps().getValues(), new Function<Object, Subject>() {
+            @Nullable
+            @Override
+            public Subject apply(Object input) {
+                GameProfile profile = ((GameProfile) ((UserListOpsEntry) input).value);
+                return get(profile);
+            }
+        });
     }
 
     @Override
