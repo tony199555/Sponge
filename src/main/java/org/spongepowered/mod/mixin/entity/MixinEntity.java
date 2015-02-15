@@ -36,6 +36,8 @@ import net.minecraft.world.WorldServer;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntitySnapshot;
 import org.spongepowered.api.entity.EntityType;
+import org.spongepowered.api.event.SpongeEventFactory;
+import org.spongepowered.api.event.entity.EntityMoveEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -46,6 +48,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.mod.SpongeMod;
+import org.spongepowered.mod.event.SpongeEventHooks;
 import org.spongepowered.mod.interfaces.IMixinEntity;
 import org.spongepowered.mod.registry.SpongeGameRegistry;
 import org.spongepowered.mod.util.SpongeHooks;
@@ -97,6 +100,18 @@ public abstract class MixinEntity implements Entity, IMixinEntity {
     public void onMoveEntity(double x, double y, double z, CallbackInfo ci) {
         if (!this.worldObj.isRemote && !SpongeHooks.checkEntitySpeed(((net.minecraft.entity.Entity) (Object) this), x, y, z)) {
             ci.cancel();
+        }
+
+        EntityMoveEvent moveEvent = SpongeEventFactory.createEntityMove(SpongeMod.instance.getGame(), this, getLocation(), new Location(this.getWorld(), new Vector3d(x, y, z)));
+
+        SpongeMod.instance.getGame().getEventManager().post(moveEvent);
+
+        if(moveEvent.isCancelled()) {
+            ci.cancel();
+        } else {
+            x = moveEvent.getNewLocation().getPosition().getX();
+            y = moveEvent.getNewLocation().getPosition().getY();
+            z = moveEvent.getNewLocation().getPosition().getZ();
         }
     }
 
