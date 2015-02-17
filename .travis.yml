@@ -10,7 +10,10 @@ matrix:
   include:
     - jdk: openjdk6
       sudo: true
-install: gradle setupCIWorkspace
+install: gradle repackMinecraft
 script: gradle build
 notifications:
   email: false
+caches:
+  directories:
+    - $HOME/.gradle/caches/minecraft
