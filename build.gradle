@@ -259,10 +259,23 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     dependsOn "SpongeAPI:javadoc"
 }
 
+task sdkZip(type: Zip, dependsOn: reobf) {
+    from('sdk') {
+        exclude 'build.gradle'
+        rename "\\w*\\.gitignore", '.gitignore'
+    }
+    from('sdk') {
+        include 'build.gradle'
+        expand "forgeVersion": minecraft.apiVersion, "mappings": minecraft.mappings, 'version': project.version
+    }
+    classifier = 'sdk'
+}
+
 artifacts {
     archives deobfJar
     archives sourceJar
     archives javadocJar
+    archives sdkZip
 }
 
 uploadArchives {
