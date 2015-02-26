@@ -23,12 +23,12 @@ archivesBaseName = "pluginid"
 
 minecraft {
     version = "${forgeVersion}"
-    mappings = "${mappings}"
+    //mappings = "${mappings}"   we dont use a mapping right now.. we really should...
     runDir = "eclipse"
 }
 
 repositories {
-    // uhh...
+    // uhh... some repository?
 }
 
 dependencies {
@@ -45,6 +45,6 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
-    // uh..
+    // uh.. ??
     // compile "org.spongepowerred:sponge:${version}"
 }
