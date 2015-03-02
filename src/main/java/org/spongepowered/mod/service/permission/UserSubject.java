@@ -60,12 +60,12 @@ public class UserSubject implements Subject {
 
     @Override
     public Optional<CommandSource> getCommandSource() {
-        return Optional.fromNullable((CommandSource) MinecraftServer.getServer().getConfigurationManager().func_177451_a(player.getId()));
+        return Optional.fromNullable((CommandSource) MinecraftServer.getServer().getConfigurationManager().getPlayerByUUID(player.getId()));
     }
 
     int getOpLevel() {
         // Query op level from server ops list based on player's game profile
-        return ((UserListOpsEntry) MinecraftServer.getServer().getConfigurationManager().getOppedPlayers().getEntry(player)).func_152644_a();
+        return ((UserListOpsEntry) MinecraftServer.getServer().getConfigurationManager().getOppedPlayers().getEntry(player)).getPermissionLevel();
     }
 
     @Override

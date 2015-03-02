@@ -25,7 +25,6 @@
 package org.spongepowered.mod.service.permission;
 
 import com.google.common.base.Optional;
-import org.spongepowered.api.GameProfile;
 import org.spongepowered.api.service.permission.MemorySubjectData;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.Subject;
@@ -39,16 +38,12 @@ import java.util.Map;
 import java.util.Set;
 
 public class OpLevelSubject extends SpongeSubject {
-    private final GameProfile profile;
+    private final int level;
     private final MemorySubjectData data;
-    public OpLevelSubject(OpPermissionService service, GameProfile profile) {
+    public OpLevelSubject(OpPermissionService service, int level) {
         super(service);
-        this.profile = profile;
+        this.level = level;
         this.data = new OpLevelSubjectData(service);
-    }
-
-    private int getOpLevel() {
-
     }
 
     @Override

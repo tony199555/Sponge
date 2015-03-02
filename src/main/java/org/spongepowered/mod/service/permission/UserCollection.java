@@ -36,6 +36,7 @@ import org.spongepowered.api.service.permission.SubjectCollection;
 import org.spongepowered.api.service.permission.context.Context;
 
 import javax.annotation.Nullable;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -70,11 +71,11 @@ public class UserCollection implements SubjectCollection {
 
     private GameProfile uuidToGameProfile(UUID uid) {
         PlayerProfileCache cache = MinecraftServer.getServer().getPlayerProfileCache();
-        GameProfile profile = cache.func_152652_a(uid); // Get already cached profile by uuid
+        GameProfile profile = cache.getProfileByUUID(uid); // Get already cached profile by uuid
         if (profile == null) {
             profile = MinecraftServer.getServer().getMinecraftSessionService().fillProfileProperties(new GameProfile(uid, null), false);
-            cache.func_152649_a(profile); // Cache newly looked up profile
-            cache.func_152658_c(); // Save
+            cache.addEntry(profile); // Cache newly looked up profile
+            cache.save(); // Save
         }
         return profile;
     }
@@ -99,7 +100,7 @@ public class UserCollection implements SubjectCollection {
 
     @Override
     public Iterable<Subject> getAllSubjects() {
-        return Iterables.transform(OpPermissionService.getOps().getValues(), new Function<Object, Subject>() {
+        return Iterables.<Object, Subject>transform(OpPermissionService.getOps().getValues().values(), new Function<Object, Subject>() {
             @Nullable
             @Override
             public Subject apply(Object input) {

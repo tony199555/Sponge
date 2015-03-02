@@ -33,7 +33,6 @@ import org.spongepowered.api.world.extent.Extent;
 
 import java.util.Set;
 
-// TODO Register this when a permission service is registered -- needs service register events
 /**
  * A context calculator handling world contexts
  */
