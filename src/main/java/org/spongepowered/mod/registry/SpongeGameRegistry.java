@@ -73,6 +73,7 @@ import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.effect.sound.SoundType;
 import org.spongepowered.api.effect.sound.SoundTypes;
 import org.spongepowered.api.entity.EntityInteractionType;
+import org.spongepowered.api.entity.EntityInteractionTypes;
 import org.spongepowered.api.entity.EntityType;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.hanging.art.Art;
@@ -145,6 +146,7 @@ import org.spongepowered.mod.effect.particle.SpongeParticleType;
 import org.spongepowered.mod.effect.sound.SpongeSound;
 import org.spongepowered.mod.entity.SpongeCareer;
 import org.spongepowered.mod.entity.SpongeEntityConstants;
+import org.spongepowered.mod.entity.SpongeEntityInteractionType;
 import org.spongepowered.mod.entity.SpongeEntityMeta;
 import org.spongepowered.mod.entity.SpongeEntityType;
 import org.spongepowered.mod.entity.SpongeProfession;
@@ -219,6 +221,11 @@ public class SpongeGameRegistry implements GameRegistry {
             .put("CREATIVE", new SpongeGameMode())
             .put("ADVENTURE", new SpongeGameMode())
             .put("SPECTATOR", new SpongeGameMode())
+            .build();
+    private static final ImmutableMap<String, EntityInteractionType> entityInteractionTypeMappings = new ImmutableMap.Builder<String, EntityInteractionType>()
+            .put("ATTACK", new SpongeEntityInteractionType("ATTACK"))
+            .put("PICK_BLOCK", new SpongeEntityInteractionType("PICK_BLOCK"))
+            .put("USE", new SpongeEntityInteractionType("USE"))
             .build();
     private final Map<String, Art> artMappings = Maps.newHashMap();
     private final Map<String, EntityType> entityTypeMappings = Maps.newHashMap();
@@ -1048,6 +1055,10 @@ public class SpongeGameRegistry implements GameRegistry {
         });
     }
 
+    private void setEntityInteractionTypes() {
+        RegistryHelper.mapFields(EntityInteractionTypes.class, this.entityInteractionTypeMappings);
+    }
+
     private void setTextActionFactory() {
         RegistryHelper.setFactory(TextActions.class, new SpongeTextActionFactory());
     }
@@ -1367,6 +1378,7 @@ public class SpongeGameRegistry implements GameRegistry {
         setBannerPatternShapes();
         setGameModes();
         setSounds();
+        setEntityInteractionTypes();
     }
 
     public void postInit() {
