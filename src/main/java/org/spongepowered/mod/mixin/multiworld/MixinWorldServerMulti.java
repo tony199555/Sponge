@@ -22,14 +22,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.mod.interfaces;
+package org.spongepowered.mod.mixin.multiworld;
 
+import net.minecraft.profiler.Profiler;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.MinecraftException;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
-import org.spongepowered.mod.configuration.SpongeConfig;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 
-public interface IMixinWorld {
+@NonnullByDefault
+@Mixin(net.minecraft.world.WorldServerMulti.class)
+public abstract class MixinWorldServerMulti extends WorldServer {
 
-    SpongeConfig getWorldConfig();
+    public MixinWorldServerMulti(MinecraftServer server, ISaveHandler saveHandlerIn, WorldInfo info, int dimensionId, Profiler profilerIn) {
+        super(server, saveHandlerIn, info, dimensionId, profilerIn);
+    }
 
-    void setWorldInfo(WorldInfo worldInfo);
+    @Override
+    @Overwrite
+    protected void saveLevel() throws MinecraftException {
+        // this.perWorldStorage.saveAllData();
+        // we handle all saving including perWorldStorage in WorldServer.saveLevel. This needs to be disabled since we
+        // use a seperate save handler for each world. Each world folder needs to generate a corresponding
+        // level.dat for plugins that require it such as MultiVerse.
+        super.saveLevel();
+    }
 }

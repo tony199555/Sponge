@@ -73,6 +73,7 @@ import org.spongepowered.mod.SpongeMod;
 import org.spongepowered.mod.configuration.SpongeConfig;
 import org.spongepowered.mod.effect.particle.SpongeParticleEffect;
 import org.spongepowered.mod.effect.particle.SpongeParticleHelper;
+import org.spongepowered.mod.interfaces.IMixinSaveHandler;
 import org.spongepowered.mod.interfaces.IMixinWorld;
 import org.spongepowered.mod.util.SpongeHooks;
 import org.spongepowered.mod.util.VecHelper;
@@ -99,6 +100,9 @@ public abstract class MixinWorld implements World, IMixinWorld {
 
     @Shadow
     protected WorldInfo worldInfo;
+
+    @Shadow
+    protected ISaveHandler saveHandler;
 
     @Shadow
     public Random rand;
@@ -154,7 +158,7 @@ public abstract class MixinWorld implements World, IMixinWorld {
 
     @Override
     public UUID getUniqueId() {
-        throw new UnsupportedOperationException();
+        return ((IMixinSaveHandler) this.saveHandler).getUniqueId();
     }
 
     @Override
@@ -502,5 +506,10 @@ public abstract class MixinWorld implements World, IMixinWorld {
             return false;
         }
         return chunk.unloadChunk();
+    }
+
+    @Override
+    public void setWorldInfo(WorldInfo worldInfo) {
+        this.worldInfo = worldInfo;
     }
 }

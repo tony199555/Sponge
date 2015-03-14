@@ -24,12 +24,7 @@
  */
 package org.spongepowered.mod.interfaces;
 
-import net.minecraft.world.storage.WorldInfo;
-import org.spongepowered.mod.configuration.SpongeConfig;
+public interface IMixinWorldInfo {
 
-public interface IMixinWorld {
-
-    SpongeConfig getWorldConfig();
-
-    void setWorldInfo(WorldInfo worldInfo);
+    int getDimension();
 }

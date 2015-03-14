@@ -22,14 +22,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.mod.interfaces;
+package org.spongepowered.mod.mixin.multiworld;
 
+import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
-import org.spongepowered.mod.configuration.SpongeConfig;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.api.world.World;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.mod.interfaces.IMixinSaveHandler;
 
-public interface IMixinWorld {
+import java.util.UUID;
 
-    SpongeConfig getWorldConfig();
+// Disabled for now due to Mixin bug with multiple mixins writing to same target
+@NonnullByDefault
+@Mixin(net.minecraft.world.World.class)
+public abstract class MixinWorld implements World {
 
-    void setWorldInfo(WorldInfo worldInfo);
+    @Shadow
+    protected ISaveHandler saveHandler;
+
+    @Shadow
+    protected WorldInfo worldInfo;
+
+    @Override
+    public UUID getUniqueId() {
+        return ((IMixinSaveHandler) this.saveHandler).getUniqueId();
+    }
 }

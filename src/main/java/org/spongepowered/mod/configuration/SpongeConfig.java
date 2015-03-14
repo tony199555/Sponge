@@ -80,6 +80,7 @@ public class SpongeConfig {
 
     // MODULES
     public static final String MODULE_ENTITY_ACTIVATION_RANGE = "entity-activation-range";
+    public static final String MODULE_MULTIWORLD = "multiworld";
 
     // WORLD
     public static final String WORLD_INFINITE_WATER_SOURCE = "infinite-water-source";
@@ -300,6 +301,8 @@ public class SpongeConfig {
 
             @Setting(value = MODULE_ENTITY_ACTIVATION_RANGE)
             public boolean pluginEntityActivation = true;
+            @Setting(value = MODULE_MULTIWORLD)
+            public boolean pluginMultiWorld = true;
         }
 
         @ConfigSerializable

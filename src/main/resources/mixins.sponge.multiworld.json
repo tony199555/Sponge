@@ -1,0 +1,12 @@
+{
+    "package": "org.spongepowered.mod.mixin.multiworld",
+    "plugin": "org.spongepowered.mod.mixin.plugin.MultiWorldMixinPlugin",
+    "refmap": "mixins.sponge.refmap.json",
+    "mixins": [
+        "MixinAnvilSaveHandler",
+        "MixinMinecraftServer",
+        "MixinSaveHandler",
+        "MixinWorldInfo",
+        "MixinWorldServerMulti"
+    ]
+}

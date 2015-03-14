@@ -24,12 +24,9 @@
  */
 package org.spongepowered.mod.interfaces;
 
-import net.minecraft.world.storage.WorldInfo;
-import org.spongepowered.mod.configuration.SpongeConfig;
+import java.util.UUID;
 
-public interface IMixinWorld {
+public interface IMixinSaveHandler {
 
-    SpongeConfig getWorldConfig();
-
-    void setWorldInfo(WorldInfo worldInfo);
+    UUID getUniqueId();
 }

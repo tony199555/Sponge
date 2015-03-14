@@ -22,14 +22,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.mod.interfaces;
+package org.spongepowered.mod.mixin.multiworld;
 
-import net.minecraft.world.storage.WorldInfo;
-import org.spongepowered.mod.configuration.SpongeConfig;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.mod.interfaces.IMixinWorldInfo;
 
-public interface IMixinWorld {
+@NonnullByDefault
+@Mixin(net.minecraft.world.storage.WorldInfo.class)
+public abstract class MixinWorldInfo implements IMixinWorldInfo {
 
-    SpongeConfig getWorldConfig();
+    @Shadow
+    private int dimension;
 
-    void setWorldInfo(WorldInfo worldInfo);
+    @Override
+    public int getDimension() {
+        return this.dimension;
+    }
 }
