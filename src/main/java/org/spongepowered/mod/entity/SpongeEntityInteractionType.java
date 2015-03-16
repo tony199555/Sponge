@@ -25,6 +25,7 @@
 package org.spongepowered.mod.entity;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import org.spongepowered.api.entity.EntityInteractionType;
 import org.spongepowered.api.service.persistence.DataSource;
 import org.spongepowered.api.service.persistence.data.DataContainer;
@@ -44,7 +45,7 @@ public class SpongeEntityInteractionType implements EntityInteractionType {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
+        return Objects.toStringHelper(this)
                 .add("name", this.name)
                 .toString();
     }
