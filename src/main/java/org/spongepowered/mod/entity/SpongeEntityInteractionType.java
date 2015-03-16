@@ -43,30 +43,6 @@ public class SpongeEntityInteractionType implements EntityInteractionType {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        SpongeEntityInteractionType other = (SpongeEntityInteractionType) obj;
-        if (this.name != other.name) {
-            return false;
-        }
-        return true;
-    }
-
-    public DataContainer toContainer() {
-        // TODO
-        return null;
-    }
-
-    public void serialize(DataSource source) {
-        // TODO
-    }
-
-    @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("name", this.name)
