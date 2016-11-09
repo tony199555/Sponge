@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,27 +24,22 @@
  */
 package org.spongepowered.mod.mixin.core.event.world;
 
-import net.minecraft.world.World;
-import net.minecraftforge.event.world.WorldEvent;
-import org.spongepowered.api.event.world.ChunkEvent;
+import net.minecraftforge.event.world.ChunkEvent;
+import org.spongepowered.api.event.world.chunk.TargetChunkEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.Chunk;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @NonnullByDefault
-@Mixin(value = net.minecraftforge.event.world.ChunkEvent.class, remap = false)
-public abstract class MixinEventChunk extends WorldEvent implements ChunkEvent {
+@Mixin(value = ChunkEvent.class, remap = false)
+public abstract class MixinEventChunk extends MixinEventWorld implements TargetChunkEvent {
 
-    public MixinEventChunk(World world) {
-        super(world);
-    }
-
-    @Shadow
-    public net.minecraft.world.chunk.Chunk chunk;
+    @Shadow @Final public net.minecraft.world.chunk.Chunk chunk;
 
     @Override
-    public Chunk getChunk() {
+    public Chunk getTargetChunk() {
         return (Chunk) this.chunk;
     }
 

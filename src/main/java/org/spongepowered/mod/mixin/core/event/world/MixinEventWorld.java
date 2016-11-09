@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,29 +24,43 @@
  */
 package org.spongepowered.mod.mixin.core.event.world;
 
-import net.minecraftforge.fml.common.eventhandler.Event;
-import org.spongepowered.api.Game;
-import org.spongepowered.api.event.world.WorldEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.event.world.TargetWorldEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.World;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.mod.SpongeMod;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.mod.mixin.core.fml.common.eventhandler.MixinEvent;
 
 @NonnullByDefault
-@Mixin(value = net.minecraftforge.event.world.WorldEvent.class, remap = false)
-public abstract class MixinEventWorld extends Event implements WorldEvent {
+@Mixin(value = WorldEvent.class, remap = false)
+public abstract class MixinEventWorld extends MixinEvent implements TargetWorldEvent {
 
-    @Shadow
-    public net.minecraft.world.World world;
+    @Shadow @Final private net.minecraft.world.World world;
+
+    @Shadow public abstract net.minecraft.world.World getWorld();
+
+    private Cause cause;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void onConstruct(CallbackInfo callbackInfo) {
+        this.cause = Cause.of(NamedCause.source(this.world));
+    }
 
     @Override
-    public World getWorld() {
+    public World getTargetWorld() {
         return (World) this.world;
     }
 
     @Override
-    public Game getGame() {
-        return SpongeMod.instance.getGame();
+    public Cause getCause() {
+        return this.cause;
     }
+
 }

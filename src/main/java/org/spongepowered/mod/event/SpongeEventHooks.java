@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,32 +24,47 @@
  */
 package org.spongepowered.mod.event;
 
+import net.minecraftforge.common.ForgeChunkManager.ForceChunkEvent;
+import net.minecraftforge.common.ForgeChunkManager.UnforceChunkEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.world.ChunkWatchEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import org.spongepowered.mod.interfaces.IMixinEntity;
-import org.spongepowered.mod.util.SpongeHooks;
+import org.spongepowered.common.interfaces.IMixinChunk;
+import org.spongepowered.common.interfaces.entity.IMixinEntity;
+import org.spongepowered.common.interfaces.world.gen.IMixinChunkProviderServer;
+import org.spongepowered.common.util.SpongeHooks;
 
 public class SpongeEventHooks {
 
-    @SideOnly(Side.SERVER)
     @SubscribeEvent
     public void onChunkWatchEvent(ChunkWatchEvent event) {
-        IMixinEntity spongeEntity = (IMixinEntity) event.player;
+        IMixinEntity spongeEntity = (IMixinEntity) event.getPlayer();
 
         if (spongeEntity.isTeleporting()) {
-            event.player.mountEntity(spongeEntity.getTeleportVehicle());
+            spongeEntity.getTeleportVehicle().getPassengers().add(event.getPlayer());
             spongeEntity.setTeleportVehicle(null);
             spongeEntity.setIsTeleporting(false);
         }
     }
 
-    @SideOnly(Side.SERVER)
     @SubscribeEvent
     public void onEntityDeathEvent(LivingDeathEvent event) {
-        SpongeHooks.logEntityDeath(event.entity);
+        SpongeHooks.logEntityDeath(event.getEntity());
     }
 
+    @SubscribeEvent
+    public void onForceChunk(ForceChunkEvent event) {
+        final net.minecraft.world.chunk.Chunk chunk = ((IMixinChunkProviderServer) event.getTicket().world.getChunkProvider()).getLoadedChunkWithoutMarkingActive(event.getLocation().chunkXPos,  event.getLocation().chunkZPos);
+        if (chunk != null) {
+            ((IMixinChunk) chunk).setPersistedChunk(true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onUnforceChunk(UnforceChunkEvent event) {
+        final net.minecraft.world.chunk.Chunk chunk = ((IMixinChunkProviderServer) event.getTicket().world.getChunkProvider()).getLoadedChunkWithoutMarkingActive(event.getLocation().chunkXPos,  event.getLocation().chunkZPos);
+        if (chunk != null) {
+            ((IMixinChunk) chunk).setPersistedChunk(false);
+        }
+    }
 }

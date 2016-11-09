@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,198 +24,57 @@
  */
 package org.spongepowered.mod.mixin.core.server;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.ServerConfigurationManager;
-import net.minecraft.util.IChatComponent;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import org.spongepowered.api.Server;
-import org.spongepowered.api.entity.player.Player;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.util.command.source.ConsoleSource;
-import org.spongepowered.api.world.World;
-import org.spongepowered.api.world.gen.WorldGenerator;
-import org.spongepowered.asm.mixin.Implements;
-import org.spongepowered.asm.mixin.Interface;
+import org.spongepowered.api.world.ChunkTicketManager;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.mod.text.SpongeText;
+import org.spongepowered.common.interfaces.IMixinMinecraftServer;
+import org.spongepowered.common.world.WorldManager;
+import org.spongepowered.mod.service.world.SpongeChunkTicketManager;
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.Hashtable;
 
-@NonnullByDefault
-@Mixin(MinecraftServer.class)
-@Implements(@Interface(iface = Server.class, prefix = "server$"))
-public abstract class MixinMinecraftServer implements Server, ConsoleSource {
+@Mixin(value = MinecraftServer.class, priority = 1001)
+public abstract class MixinMinecraftServer implements Server, IMixinMinecraftServer {
 
-    @Shadow
-    public abstract ServerConfigurationManager getConfigurationManager();
+    public ChunkTicketManager chunkTicketManager = new SpongeChunkTicketManager();
 
-    @Shadow
-    @SideOnly(Side.SERVER)
-    public abstract String getServerHostname();
-
-    @Shadow
-    @SideOnly(Side.SERVER)
-    public abstract int getPort();
-
-    @Shadow
-    private int tickCounter;
-
-    @Shadow
-    private ServerConfigurationManager serverConfigManager;
-
-    @Shadow
-    public abstract void addChatMessage(IChatComponent message);
-
-    @Shadow
-    public abstract boolean isServerInOnlineMode();
-
-    @Shadow
-    public abstract void initiateShutdown();
+    @Shadow(remap = false) public Hashtable<Integer, long[]> worldTickTimes;
 
     @Override
-    public Collection<World> getWorlds() {
-        List<World> worlds = new ArrayList<World>();
-        for (WorldServer worldServer : DimensionManager.getWorlds()) {
-            worlds.add((World) worldServer);
+    public Hashtable<Integer, long[]> getWorldTickTimes() {
+        return this.worldTickTimes;
+    }
+
+    @Override
+    public ChunkTicketManager getChunkTicketManager() {
+        return this.chunkTicketManager;
+    }
+
+    /**
+     * @author Zidane - May 11th, 2016
+     * @reason Directs to {@link WorldManager} for multi world handling.
+     *
+     * @param dimensionId The requested dimension id
+     * @return The world server, if available, or else the overworld
+     */
+    @Overwrite
+    public WorldServer worldServerForDimension(int dimensionId) {
+        WorldServer ret = WorldManager.getWorldByDimensionId(dimensionId).orElse(null);
+        if (ret == null) {
+            DimensionManager.initDimension(dimensionId);
+            ret = WorldManager.getWorldByDimensionId(dimensionId).orElse(null);
         }
-        return worlds;
-    }
 
-    @Override
-    public Optional<World> getWorld(UUID uniqueId) {
-        // TODO: This needs to map to world id's somehow
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Optional<World> getWorld(String worldName) {
-        for (World world : getWorlds()) {
-            if (world.getName().equals(worldName)) {
-                return Optional.fromNullable(world);
-            }
+        if (ret == null) {
+            return WorldManager.getWorldByDimensionId(0).orElseThrow(() -> new RuntimeException("Attempt made to initialize "
+                    + "dimension before overworld is loaded!"));
         }
-        return Optional.absent();
-    }
 
-    @Override
-    public Optional<World> loadWorld(String worldName) {
-        throw new UnsupportedOperationException(); // TODO
-    }
-
-    @Override
-    public boolean unloadWorld(World world) {
-        throw new UnsupportedOperationException(); // TODO
-    }
-
-    @Override
-    public World createWorld(String worldName, WorldGenerator generator, long seed) {
-        throw new UnsupportedOperationException(); // TODO
-    }
-
-    @Override
-    public World createWorld(String worldName, WorldGenerator generator) {
-        throw new UnsupportedOperationException(); // TODO
-    }
-
-    @Override
-    public World createWorld(String worldName) {
-        throw new UnsupportedOperationException(); // TODO
-    }
-
-    @SuppressWarnings("rawtypes")
-    @Override
-    public void broadcastMessage(Text message) {
-        getConfigurationManager().sendChatMsg(((SpongeText) message).toComponent());
-    }
-
-    @Override
-    public Optional<InetSocketAddress> getBoundAddress() {
-        return Optional.fromNullable(new InetSocketAddress(getServerHostname(), getPort()));
-    }
-
-    @Override
-    public boolean hasWhitelist() {
-        return this.serverConfigManager.isWhiteListEnabled();
-    }
-
-    @Override
-    public void setHasWhitelist(boolean enabled) {
-        this.serverConfigManager.setWhiteListEnabled(enabled);
-    }
-
-    @Override
-    public boolean getOnlineMode() {
-        return isServerInOnlineMode();
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Collection<Player> getOnlinePlayers() {
-        return ImmutableList.copyOf((List<Player>) getConfigurationManager().playerEntityList);
-    }
-
-    @Override
-    public Optional<Player> getPlayer(UUID uniqueId) {
-        return Optional.fromNullable((Player) getConfigurationManager().getPlayerByUUID(uniqueId));
-    }
-
-    @Override
-    public Optional<Player> getPlayer(String name) {
-        return Optional.fromNullable((Player) getConfigurationManager().getPlayerByUsername(name));
-    }
-
-    @Override
-    public Text getMotd() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getMaxPlayers() {
-        return getConfigurationManager().getMaxPlayers();
-    }
-
-    @Override
-    public int getRunningTimeTicks() {
-        return this.tickCounter;
-    }
-
-    @Override
-    public void sendMessage(Text... messages) {
-        for (Text message : messages) {
-            addChatMessage(((SpongeText) message).toComponent());
-        }
-    }
-
-    @Override
-    public void sendMessage(Iterable<Text> messages) {
-        for (Text message : messages) {
-            addChatMessage(((SpongeText) message).toComponent());
-        }
-    }
-
-    @Override
-    public boolean hasPermission(String permission) {
-        // TODO
-        return true;
-    }
-
-    @Override
-    public void shutdown(Text kickMessage) {
-        /*for (Player player : getOnlinePlayers()) {
-            ((EntityPlayerMP) player).playerNetServerHandler.kickPlayerFromServer(kickMessage.toLegacy()); //TODO update with the new Text API
-        }*/
-
-        initiateShutdown();
+        return ret;
     }
 }

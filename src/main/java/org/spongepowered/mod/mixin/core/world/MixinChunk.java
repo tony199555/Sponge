@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,105 +25,76 @@
 package org.spongepowered.mod.mixin.core.world;
 
 import com.flowpowered.math.vector.Vector3i;
-import net.minecraft.world.ChunkCoordIntPair;
-import net.minecraft.world.World;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.Chunk;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.mod.util.SpongeHooks;
+import org.spongepowered.common.interfaces.IMixinChunk;
 
 @NonnullByDefault
 @Mixin(net.minecraft.world.chunk.Chunk.class)
-public abstract class MixinChunk implements Chunk {
+public abstract class MixinChunk implements Chunk, IMixinChunk {
 
-    private Vector3i chunkPos;
-    private ChunkCoordIntPair chunkCoordIntPair;
+    @Shadow @Final private net.minecraft.world.World worldObj;
+    @Shadow @Final public int xPosition;
+    @Shadow @Final public int zPosition;
 
-    @Shadow
-    private net.minecraft.world.World worldObj;
-
-    @Shadow
-    public int xPosition;
-
-    @Shadow
-    public int zPosition;
-
-    @Shadow
-    private boolean isChunkLoaded;
-
-    @Shadow
-    private boolean isTerrainPopulated;
-
-    @Inject(method = "<init>", at = @At("RETURN"))
-    public void onConstructed(World world, int x, int z, CallbackInfo ci) {
-        this.chunkPos = new Vector3i(x, 0, z);
-        this.chunkCoordIntPair = new ChunkCoordIntPair(x, z);
-    }
-
-    @SideOnly(Side.SERVER)
-    @Inject(method = "onChunkLoad()V", at = @At("RETURN"))
+    @Inject(method = "onChunkLoad", at = @At("RETURN"))
     public void onChunkLoadInject(CallbackInfo ci) {
-        SpongeHooks.logChunkLoad(this.worldObj, this.chunkPos);
-    }
-
-    @SideOnly(Side.SERVER)
-    @Inject(method = "onChunkUnload()V", at = @At("RETURN"))
-    public void onChunkUnloadInject(CallbackInfo ci) {
-        SpongeHooks.logChunkUnload(this.worldObj, this.chunkPos);
-    }
-
-    @Override
-    public Vector3i getPosition() {
-        return this.chunkPos;
-    }
-
-    @Override
-    public boolean isLoaded() {
-        return this.isChunkLoaded;
-    }
-
-    @Override
-    public boolean isPopulated() {
-        return this.isTerrainPopulated;
-    }
-
-    @Override
-    public boolean loadChunk(boolean generate) {
-        WorldServer worldserver = (WorldServer) this.worldObj;
-        net.minecraft.world.chunk.Chunk chunk = null;
-        if (worldserver.theChunkProviderServer.chunkExists(this.xPosition, this.zPosition) || generate) {
-            chunk = worldserver.theChunkProviderServer.loadChunk(this.xPosition, this.zPosition);
+        if (!this.worldObj.isRemote) {
+            for (ChunkPos forced : this.worldObj.getPersistentChunks().keySet()) {
+                if (forced.chunkXPos == this.xPosition && forced.chunkZPos == this.zPosition) {
+                    ((IMixinChunk) this).setPersistedChunk(true);
+                    return;
+                }
+            }
+            ((IMixinChunk) this).setPersistedChunk(false);
         }
+    }
 
-        return chunk != null;
+    @Inject(method = "onChunkUnload", at = @At("RETURN"))
+    public void onChunkUnloadInject(CallbackInfo ci) {
+        // Moved from ChunkProviderServer
+        net.minecraftforge.common.ForgeChunkManager.putDormantChunk(ChunkPos.chunkXZ2Int(this.xPosition, this.zPosition), (net.minecraft.world.chunk.Chunk)(Object) this);
     }
 
     @Override
     public boolean unloadChunk() {
-        if (ForgeChunkManager.getPersistentChunksFor(this.worldObj).containsKey(this.chunkCoordIntPair)) {
+        if (((IMixinChunk) this).isPersistedChunk()) {
             return false;
         }
 
-        if (this.worldObj.provider.canRespawnHere() && DimensionManager.shouldLoadSpawn(this.worldObj.provider.getDimensionId())) {
+        // TODO 1.9 Update - Zidane's thing
+        if (this.worldObj.provider.canRespawnHere()) {//&& DimensionManager.shouldLoadSpawn(this.worldObj.provider.getDimension())) {
             if (this.worldObj.isSpawnChunk(this.xPosition, this.zPosition)) {
                 return false;
             }
         }
-        ((WorldServer) this.worldObj).theChunkProviderServer.dropChunk(this.xPosition, this.zPosition);
+        ((WorldServer) this.worldObj).getChunkProvider().unload((net.minecraft.world.chunk.Chunk) (Object) this);
         return true;
     }
 
-    @Override
-    public org.spongepowered.api.world.World getWorld() {
-        return (org.spongepowered.api.world.World) this.worldObj;
+    @SideOnly(Side.CLIENT)
+    @Inject(method = "setChunkLoaded", at = @At("RETURN"))
+    public void onSetChunkLoaded(boolean loaded, CallbackInfo ci) {
+        Direction[] directions = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
+        for (Direction direction : directions) {
+            Vector3i neighborPosition = this.getPosition().add(direction.asBlockOffset());
+            net.minecraft.world.chunk.Chunk neighbor = this.worldObj.getChunkProvider().getLoadedChunk
+                    (neighborPosition.getX(), neighborPosition.getZ());
+            if (neighbor != null) {
+                this.setNeighbor(direction, (Chunk) neighbor);
+                ((IMixinChunk) neighbor).setNeighbor(direction.getOpposite(), this);
+            }
+        }
     }
 }

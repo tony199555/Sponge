@@ -65,7 +65,7 @@ Thumbs.db
 .checkstyle
 .factorypath
 run
-eclipse
+./eclipse
 nbproject
 atlassian-ide-plugin.xml
 build.xml
@@ -74,3 +74,5 @@ nb-configuration.xml
 *.ipr
 *.iws
 /.apt_generated/
+*.launch
+classes/

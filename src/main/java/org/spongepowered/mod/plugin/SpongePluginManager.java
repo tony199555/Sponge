@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,47 +24,65 @@
  */
 package org.spongepowered.mod.plugin;
 
-import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableSet;
 import net.minecraftforge.fml.common.Loader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.minecraftforge.fml.common.ModContainer;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.plugin.PluginManager;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @NonnullByDefault
 public class SpongePluginManager implements PluginManager {
 
-    @Override
-    public Optional<PluginContainer> getPlugin(String s) {
-        return Optional.fromNullable((PluginContainer) Loader.instance().getIndexedModList().get(s));
-    }
+    private static final PluginContainer MINECRAFT_CONTAINER = (PluginContainer) Loader.instance().getMinecraftModContainer();
 
     @Override
-    public Logger getLogger(PluginContainer pluginContainer) {
-        return LoggerFactory.getLogger(pluginContainer.getId());
+    public Optional<PluginContainer> getPlugin(String id) {
+        checkNotNull(id, "id");
+        if (id.equals(MINECRAFT_CONTAINER.getId())) {
+            return Optional.of((PluginContainer) Loader.instance().getMinecraftModContainer());
+        } else {
+            ModContainer container = Loader.instance().getIndexedModList().get(id);
+            if (container == null) {
+                for (ModContainer mod : Loader.instance().getModList()) {
+                    if (mod.getModId().equalsIgnoreCase(id)) {
+                        container = mod;
+                        break;
+                    }
+                }
+            }
+            return Optional.ofNullable((PluginContainer) container);
+        }
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Collection<PluginContainer> getPlugins() {
-        return ImmutableSet.copyOf((List) Loader.instance().getActiveModList());
+        return ImmutableSet.<PluginContainer>builder()
+                .add((PluginContainer) Loader.instance().getMinecraftModContainer())
+                .addAll((List) Loader.instance().getActiveModList())
+                .build();
     }
 
     @Override
     public Optional<PluginContainer> fromInstance(Object instance) {
+        checkNotNull(instance, "instance");
         if (instance instanceof PluginContainer) {
             return Optional.of((PluginContainer) instance);
         }
-        return Optional.fromNullable((PluginContainer) Loader.instance().getReversedModObjectList().get(instance));
+        return Optional.ofNullable((PluginContainer) Loader.instance().getReversedModObjectList().get(instance));
     }
 
     @Override
-    public boolean isLoaded(String s) {
-        return Loader.isModLoaded(s);
+    public boolean isLoaded(String id) {
+        checkNotNull(id, "id");
+        return id.equals(MINECRAFT_CONTAINER.getId()) || Loader.isModLoaded(id);
     }
+
 }

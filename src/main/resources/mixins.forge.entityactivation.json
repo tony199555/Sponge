@@ -1,0 +1,14 @@
+{
+    "minVersion": "0.5.7",
+    "package": "org.spongepowered.mod.mixin.entityactivation",
+    "plugin": "org.spongepowered.common.mixin.plugin.entityactivation.EntityActivationRangePlugin",
+    "refmap": "mixins.forge.refmap.json",
+    "target": "@env(DEFAULT)",
+    "compatibilityLevel": "JAVA_8",
+    "server": [
+        "MixinWorld_Activation"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

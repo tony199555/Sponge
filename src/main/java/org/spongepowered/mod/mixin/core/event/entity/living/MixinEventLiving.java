@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,31 +24,25 @@
  */
 package org.spongepowered.mod.mixin.core.event.entity.living;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import org.spongepowered.api.entity.living.Living;
-import org.spongepowered.api.event.entity.living.LivingEvent;
+import org.spongepowered.api.event.entity.living.TargetLivingEvent;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.mod.mixin.core.event.entity.MixinEventEntity;
 
-@Mixin(value = net.minecraftforge.event.entity.living.LivingEvent.class, remap = false)
-public abstract class MixinEventLiving extends EntityEvent implements LivingEvent {
+@Mixin(value = LivingEvent.class, remap = false)
+public abstract class MixinEventLiving extends MixinEventEntity implements TargetLivingEvent {
 
-    @Shadow
-    public EntityLivingBase entityLiving;
+    @Shadow @Final private EntityLivingBase entityLiving;
 
-    public MixinEventLiving(Entity entity) {
-        super(entity);
-    }
+    @Shadow public abstract EntityLivingBase getEntityLiving();
 
     @Override
-    public Living getLiving() {
+    public Living getTargetEntity() {
         return (Living) this.entityLiving;
     }
 
-    @Override
-    public Living getEntity() {
-        return (Living) this.entityLiving;
-    }
 }

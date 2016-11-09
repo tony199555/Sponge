@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,17 +24,27 @@
  */
 package org.spongepowered.mod.mixin.core.event.entity;
 
-import net.minecraft.entity.Entity;
 import net.minecraftforge.event.entity.EntityEvent;
-import org.spongepowered.api.event.entity.EntityConstructingEvent;
+import org.spongepowered.api.entity.EntityType;
+import org.spongepowered.api.entity.Transform;
+import org.spongepowered.api.event.entity.ConstructEntityEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.api.world.World;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.common.entity.EntityUtil;
 
 @NonnullByDefault
 @Mixin(value = EntityEvent.EntityConstructing.class, remap = false)
-public abstract class MixinEventEntityConstructing extends EntityEvent implements EntityConstructingEvent {
+public abstract class MixinEventEntityConstructing extends MixinEventEntity implements ConstructEntityEvent.Post {
 
-    public MixinEventEntityConstructing(Entity entity) {
-        super(entity);
+    @Override
+    public Transform<World> getTransform() {
+        return EntityUtil.fromNative(this.shadow$getEntity()).getTransform();
     }
+
+    @Override
+    public EntityType getTargetType() {
+        return EntityUtil.fromNative(this.shadow$getEntity()).getType();
+    }
+
 }

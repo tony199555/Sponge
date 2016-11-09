@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,29 +24,26 @@
  */
 package org.spongepowered.mod.mixin.core.event.entity;
 
-import net.minecraftforge.fml.common.eventhandler.Event;
-import org.spongepowered.api.Game;
+import net.minecraftforge.event.entity.EntityEvent;
 import org.spongepowered.api.entity.Entity;
-import org.spongepowered.api.event.entity.EntityEvent;
+import org.spongepowered.api.event.entity.TargetEntityEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.mod.SpongeMod;
+import org.spongepowered.mod.mixin.core.fml.common.eventhandler.MixinEvent;
 
 @NonnullByDefault
-@Mixin(value = net.minecraftforge.event.entity.EntityEvent.class, remap = false)
-public abstract class MixinEventEntity extends Event implements EntityEvent {
+@Mixin(value = EntityEvent.class, remap = false)
+public abstract class MixinEventEntity extends MixinEvent implements TargetEntityEvent {
 
-    @Shadow
-    public net.minecraft.entity.Entity entity;
+    @Shadow @Final private net.minecraft.entity.Entity entity;
+
+    @Shadow public abstract net.minecraft.entity.Entity shadow$getEntity();
 
     @Override
-    public Entity getEntity() {
+    public Entity getTargetEntity() {
         return (Entity) this.entity;
     }
 
-    @Override
-    public Game getGame() {
-        return SpongeMod.instance.getGame();
-    }
 }

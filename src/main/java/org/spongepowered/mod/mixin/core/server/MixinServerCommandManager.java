@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,40 +25,28 @@
 package org.spongepowered.mod.mixin.core.server;
 
 import net.minecraft.command.CommandHandler;
-import net.minecraft.command.ICommandSender;
+import net.minecraft.command.ICommand;
 import net.minecraft.command.ServerCommandManager;
-import org.spongepowered.api.Game;
-import org.spongepowered.api.event.SpongeEventFactory;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.util.command.CommandSource;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.mod.SpongeMod;
+import org.spongepowered.common.command.MinecraftCommandWrapper;
+import org.spongepowered.common.interfaces.IMixinServerCommandManager;
+import org.spongepowered.mod.command.ForgeMinecraftCommandWrapper;
 
 @NonnullByDefault
-@Mixin(ServerCommandManager.class)
-public abstract class MixinServerCommandManager extends CommandHandler {
+@Mixin(value = ServerCommandManager.class, priority = 1001)
+public abstract class MixinServerCommandManager extends CommandHandler implements IMixinServerCommandManager {
 
     @Override
-    public int executeCommand(ICommandSender sender, String command) {
-        command = command.trim();
-        if (command.startsWith("/")) {
-            command = command.substring(1);
+    public MinecraftCommandWrapper wrapCommand(ICommand command) {
+        ModContainer activeContainer = Loader.instance().activeModContainer();
+        if (activeContainer == null) {
+            activeContainer = Loader.instance().getMinecraftModContainer();
         }
 
-        String name = command;
-        String args = "";
-        int pos = name.indexOf(' ');
-        if (pos > -1) {
-            name = command.substring(0, pos);
-            args = command.substring(pos + 1);
-        }
-
-        Game game = SpongeMod.instance.getGame();
-        if (game.getEventManager().post(SpongeEventFactory.createCommand(game, args, (CommandSource) sender, name))) {
-            return 1;
-        }
-
-        return super.executeCommand(sender, command); // Try Vanilla instead
+        return new ForgeMinecraftCommandWrapper((PluginContainer) activeContainer, command);
     }
-
 }

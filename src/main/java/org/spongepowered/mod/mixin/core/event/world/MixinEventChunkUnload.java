@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,23 +25,12 @@
 package org.spongepowered.mod.mixin.core.event.world;
 
 import net.minecraftforge.event.world.ChunkEvent;
-import org.spongepowered.api.event.world.ChunkUnloadEvent;
+import org.spongepowered.api.event.world.chunk.UnloadChunkEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
-import org.spongepowered.api.world.Chunk;
-import org.spongepowered.asm.mixin.Implements;
-import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 
 @NonnullByDefault
-@Mixin(value = net.minecraftforge.event.world.ChunkEvent.Unload.class, remap = false)
-@Implements(@Interface(iface = ChunkUnloadEvent.class, prefix = "chunkunload$"))
-public abstract class MixinEventChunkUnload extends ChunkEvent {
+@Mixin(value = ChunkEvent.Unload.class, remap = false)
+public abstract class MixinEventChunkUnload extends MixinEventChunk implements UnloadChunkEvent {
 
-    public MixinEventChunkUnload(net.minecraft.world.chunk.Chunk chunk) {
-        super(chunk);
-    }
-
-    public Chunk chunkunload$getChunk() {
-        return (Chunk) getChunk();
-    }
 }

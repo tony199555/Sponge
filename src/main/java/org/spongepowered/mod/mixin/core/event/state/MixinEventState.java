@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,15 +27,21 @@ package org.spongepowered.mod.mixin.core.event.state;
 import net.minecraftforge.fml.common.event.FMLEvent;
 import net.minecraftforge.fml.common.event.FMLStateEvent;
 import org.spongepowered.api.Game;
+import org.spongepowered.api.GameState;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.mod.SpongeMod;
+import org.spongepowered.common.SpongeImpl;
 
 @NonnullByDefault
 @Mixin(FMLStateEvent.class)
 public abstract class MixinEventState extends FMLEvent {
 
     public Game getGame() {
-        return SpongeMod.instance.getGame();
+        return SpongeImpl.getGame();
     }
+
+    public GameState getState() {
+        return SpongeImpl.getGame().getState();
+    }
+
 }

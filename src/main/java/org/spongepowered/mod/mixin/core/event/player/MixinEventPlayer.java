@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,44 +24,34 @@
  */
 package org.spongepowered.mod.mixin.core.event.player;
 
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import org.spongepowered.api.entity.player.Player;
-import org.spongepowered.api.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.mod.mixin.core.event.entity.living.MixinEventLiving;
 
 @NonnullByDefault
-@Mixin(value = net.minecraftforge.event.entity.player.PlayerEvent.class, remap = false)
-public abstract class MixinEventPlayer extends LivingEvent implements PlayerEvent {
+@Mixin(value = PlayerEvent.class, remap = false)
+public abstract class MixinEventPlayer extends MixinEventLiving {
 
-    @Shadow
-    public EntityPlayer entityPlayer;
+    @Shadow @Final public EntityPlayer entityPlayer;
 
-    public MixinEventPlayer(EntityLivingBase entity) {
-        super(entity);
+    private Cause cause;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void onConstruct(CallbackInfo callbackInfo) {
+        this.cause = Cause.of(NamedCause.source(this.entityPlayer));
     }
 
     @Override
-    public Player getPlayer() {
-        return (Player) this.entityPlayer;
+    public Cause getCause() {
+        return this.cause;
     }
-
-    @Override
-    public Player getLiving() {
-        return (Player) this.entityPlayer;
-    }
-
-    @Override
-    public Player getHuman() {
-        return (Player) this.entityPlayer;
-    }
-
-    @Override
-    public Player getEntity() {
-        return (Player) this.entityPlayer;
-    }
-
 }

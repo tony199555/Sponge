@@ -1,7 +1,7 @@
 /*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) SpongePowered <https://www.spongepowered.org>
  * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,31 +25,63 @@
 package org.spongepowered.mod.mixin.core.event.inventory;
 
 import net.minecraft.entity.item.EntityItem;
-import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.item.ItemEvent;
+import net.minecraftforge.event.entity.item.ItemExpireEvent;
+import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.Item;
-import org.spongepowered.api.event.inventory.ItemEvent;
+import org.spongepowered.api.event.entity.AffectEntityEvent;
+import org.spongepowered.api.event.entity.ExpireEntityEvent;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.api.world.World;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.mod.mixin.core.event.entity.MixinEventEntity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @NonnullByDefault
-@Mixin(net.minecraftforge.event.entity.item.ItemEvent.class)
-public abstract class MixinEventItem extends EntityEvent implements ItemEvent {
+@Mixin(value = ItemEvent.class, remap = false)
+public abstract class MixinEventItem extends MixinEventEntity implements AffectEntityEvent {
 
-    @Shadow(remap = false)
-    public EntityItem entityItem;
+    protected List<Entity> entities;
 
-    public MixinEventItem(net.minecraft.entity.Entity entity) {
-        super(entity);
+    @Shadow @Final private EntityItem entityItem;
+    @Shadow public abstract EntityItem getEntityItem();
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    public void onConstructed(EntityItem itemEntity, CallbackInfo ci) {
+        this.entities = new ArrayList<>();
+        this.entities.add((Entity) itemEntity);
     }
 
     @Override
-    public Item getItem() {
-        return (Item) this.entityItem;
+    public List<Entity> getEntities() {
+        return this.entities;
     }
 
-    @Override
-    public Item getEntity() {
-        return (Item) this.entityItem;
+//    @Override
+//    public List<EntitySnapshot> getEntitySnapshots() {
+//        return this.entitySnapshots;
+//    }
+
+    @Mixin(value = ItemExpireEvent.class, remap = false)
+    static abstract class Expire extends MixinEventItem implements ExpireEntityEvent.TargetItem {
+
+        @Override
+        public Item getTargetEntity() {
+            return (Item) this.getEntityItem();
+        }
+
+        @Override
+        public World getTargetWorld() {
+            return (World) this.getEntityItem().worldObj;
+        }
+
     }
+
 }
